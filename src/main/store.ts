@@ -5,7 +5,9 @@ import {
   type DailyStats,
   type ReminderId,
   type Settings,
+  type WeekEntry,
 } from "../shared/types";
+import { dateKey, getStreak, getWeekStats } from "./stats";
 
 interface StoreData {
   settings: Settings;
@@ -24,13 +26,6 @@ function defaultSettings(): Settings {
     paused: false,
     autoStart: false,
   };
-}
-
-export function dateKey(date: Date = new Date()): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
 }
 
 export class KiboStore {
@@ -71,6 +66,14 @@ export class KiboStore {
 
   getTodayStats(day: string = dateKey()): Partial<Record<ReminderId, number>> {
     return this.store.get("stats")[day] ?? {};
+  }
+
+  getWeekStats(): WeekEntry[] {
+    return getWeekStats(this.store.get("stats"));
+  }
+
+  getStreak(): number {
+    return getStreak(this.store.get("stats"));
   }
 
   isFirstRun(): boolean {

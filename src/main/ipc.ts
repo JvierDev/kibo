@@ -33,6 +33,8 @@ export function registerIpc(deps: IpcDeps): void {
   const buildState = (): KiboState => ({
     settings: store.getSettings(),
     today: store.getTodayStats(),
+    week: store.getWeekStats(),
+    streak: store.getStreak(),
     nextReminder: engine.nextDue(),
     activeReminder: engine.getActiveReminder(),
   });
@@ -88,8 +90,9 @@ export function registerIpc(deps: IpcDeps): void {
       } else {
         engine.skip(id);
       }
-      broadcast(IPC.EVT_STATE, buildState());
-      broadcast(IPC.EVT_REACTION, { id, action });
+      const state = buildState();
+      broadcast(IPC.EVT_STATE, state);
+      broadcast(IPC.EVT_REACTION, { id, action, count: state.today[id] ?? 0 });
       setTimeout(hideMascot, 1500);
     },
   );

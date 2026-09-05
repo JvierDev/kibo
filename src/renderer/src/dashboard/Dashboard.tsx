@@ -10,6 +10,12 @@ const REMINDER_EMOJI: Record<ReminderId, string> = {
   stretch: "🙆",
   walk: "🚶",
 };
+const WEEK_COLORS: Record<ReminderId, string> = {
+  water: "bg-sky-400",
+  stretch: "bg-emerald-400",
+  walk: "bg-amber-400",
+};
+const WEEK_TARGET = 8;
 
 function Toggle({
   checked,
@@ -91,7 +97,7 @@ export function Dashboard(): React.JSX.Element {
     );
   }
 
-  const { settings, today, nextReminder, activeReminder } = state;
+  const { settings, today, week, streak, nextReminder, activeReminder } = state;
 
   const setReminder = (
     id: ReminderId,
@@ -124,16 +130,23 @@ export function Dashboard(): React.JSX.Element {
             </p>
           </div>
         </div>
-        <button
-          className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
-            settings.paused
-              ? "bg-amber-500/15 text-amber-300 hover:bg-amber-500/25"
-              : "bg-sky-500/15 text-sky-300 hover:bg-sky-500/25"
-          }`}
-          onClick={() => void window.kibo.setPaused(!settings.paused)}
-        >
-          {settings.paused ? "▶ Resume reminders" : "⏸ Pause reminders"}
-        </button>
+        <div className="flex items-center gap-2">
+          {streak > 0 && (
+            <span className="rounded-full bg-orange-500/15 px-3 py-1.5 text-sm font-medium text-orange-300">
+              🔥 {streak}-day streak
+            </span>
+          )}
+          <button
+            className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
+              settings.paused
+                ? "bg-amber-500/15 text-amber-300 hover:bg-amber-500/25"
+                : "bg-sky-500/15 text-sky-300 hover:bg-sky-500/25"
+            }`}
+            onClick={() => void window.kibo.setPaused(!settings.paused)}
+          >
+            {settings.paused ? "▶ Resume reminders" : "⏸ Pause reminders"}
+          </button>
+        </div>
       </header>
 
       <main className="flex-1 space-y-6 px-6 py-5">
@@ -227,6 +240,55 @@ export function Dashboard(): React.JSX.Element {
               max={30}
               step={1}
             />
+          </div>
+        </section>
+
+        <section>
+          <div className="mb-2 flex items-baseline justify-between">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
+              This week
+            </h2>
+            <span className="text-xs text-slate-500">per-day completions</span>
+          </div>
+          <div className="flex items-end gap-2 rounded-2xl border border-slate-800 bg-slate-900/60 px-4 py-4">
+            {week.map((entry) => {
+              const dayShort = new Date(
+                `${entry.day}T00:00:00`,
+              ).toLocaleDateString(undefined, { weekday: "short" });
+              const total = REMINDER_IDS.reduce(
+                (sum, id) => sum + (entry.counts[id] ?? 0),
+                0,
+              );
+              return (
+                <div
+                  key={entry.day}
+                  className="flex flex-1 flex-col items-center gap-1.5"
+                >
+                  <span className="text-xs font-medium text-slate-300">
+                    {total}
+                  </span>
+                  <div className="flex h-24 w-full max-w-9 flex-col justify-end overflow-hidden rounded-lg bg-slate-800/60">
+                    {REMINDER_IDS.map((id) => {
+                      const count = entry.counts[id] ?? 0;
+                      const pct = Math.min(count, WEEK_TARGET) / WEEK_TARGET;
+                      return (
+                        <div
+                          key={id}
+                          className={`${WEEK_COLORS[id]} ${count ? "" : "opacity-0"}`}
+                          style={{ height: `${pct * 100}%` }}
+                          title={`${REMINDER_LABELS[id]}: ${count}`}
+                        />
+                      );
+                    })}
+                  </div>
+                  <span
+                    className={`text-[10px] ${entry.day === week[week.length - 1].day ? "font-semibold text-sky-300" : "text-slate-500"}`}
+                  >
+                    {dayShort}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </section>
       </main>
