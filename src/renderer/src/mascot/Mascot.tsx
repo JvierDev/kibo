@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Robot, type RobotVariant } from "../components/Robot";
+import { X, Droplets, PersonStanding, Footprints } from "lucide-react";
+import { KiboMascot, type KiboState } from "../components/KiboMascot";
 import type {
   ReactionEvent,
   ReminderAction,
@@ -7,19 +8,22 @@ import type {
 } from "../../../shared/types";
 import { milestoneText, pickMessage } from "./messages";
 
-const REACTIONS: Record<
-  ReminderAction,
-  { text: (event?: ReactionEvent) => string; variant: RobotVariant }
-> = {
-  done: {
-    text: (event) => {
-      const milestone = event?.count ? milestoneText(event.count) : null;
-      return milestone ?? "Nice!";
-    },
-    variant: "celebrate",
-  },
-  snooze: { text: () => "I'll remind you shortly.", variant: "nod" },
-  skip: { text: () => "No problem.", variant: "shrug" },
+const BASE_MASCOT: Record<ReminderId, KiboState> = {
+  water: "water",
+  stretch: "stretch",
+  walk: "walk",
+};
+
+const REMINDER_ICON: Record<ReminderId, typeof Droplets> = {
+  water: Droplets,
+  stretch: PersonStanding,
+  walk: Footprints,
+};
+
+const REMINDER_ICON_COLOR: Record<ReminderId, string> = {
+  water: "var(--accent-cyan)",
+  stretch: "var(--accent-coral)",
+  walk: "var(--accent-teal)",
 };
 
 function playChime(): void {
@@ -40,17 +44,13 @@ function playChime(): void {
   });
 }
 
-function Bubble({
-  children,
-}: {
-  children: React.ReactNode;
-}): React.JSX.Element {
-  return (
-    <div className="relative rounded-3xl bg-white/95 px-5 py-4 text-slate-900 shadow-xl shadow-slate-900/20 bubble-in">
-      {children}
-      <div className="absolute -bottom-1.5 right-10 h-4 w-4 rotate-45 bg-white/95" />
-    </div>
-  );
+function reactionText(event: ReactionEvent): string {
+  if (event.action === "done") {
+    const milestone = event.count ? milestoneText(event.count) : null;
+    return milestone ?? "Nice! 🎉";
+  }
+  if (event.action === "snooze") return "I'll remind you shortly.";
+  return "No problem.";
 }
 
 export function Mascot(): React.JSX.Element {
@@ -76,6 +76,7 @@ export function Mascot(): React.JSX.Element {
       playChime();
       shownCount.current[id] += 1;
       reminderRef.current = id;
+      setReaction(null);
       setReminder(id);
     });
     const offReaction = window.kibo.onReaction((event) => {
@@ -90,8 +91,17 @@ export function Mascot(): React.JSX.Element {
 
   if (!reminder) return <div className="h-full w-full" />;
 
-  const variant = reaction ? REACTIONS[reaction.action].variant : "idle";
+  const mascotState: KiboState = reaction
+    ? reaction.action === "done"
+      ? "celebrate"
+      : reaction.action === "snooze"
+        ? "snooze"
+        : "idle"
+    : BASE_MASCOT[reminder];
+
   const message = pickMessage(reminder, shownCount.current[reminder]);
+  const Icon = REMINDER_ICON[reminder];
+  const iconColor = REMINDER_ICON_COLOR[reminder];
 
   const respond = (action: ReminderAction): void => {
     if (reaction) return;
@@ -100,48 +110,97 @@ export function Mascot(): React.JSX.Element {
   };
 
   return (
-    <div className="relative h-full w-full select-none">
-      <div className="absolute bottom-16 right-3 left-3">
-        <Bubble>
-          <p className="text-sm font-semibold">
-            {reaction ? (
-              REACTIONS[reaction.action].text(reaction)
-            ) : (
-              <>
-                {message.title}
-                <span className="font-normal text-slate-500">
-                  {" "}
-                  — {message.body}
-                </span>
-              </>
-            )}
-          </p>
+    <div className="relative flex h-full w-full select-none items-end justify-center p-3">
+      {/* Dark floating card */}
+      <div className="anim-popup relative w-full max-w-100 rounded-[22px] border border-[rgba(110,160,210,0.25)] shadow-[0_24px_60px_-18px_rgba(0,0,0,0.85)]">
+        {/* Gradient background */}
+        <div
+          className="absolute inset-0 rounded-[22px]"
+          style={{
+            background:
+              "linear-gradient(160deg, #0d1b2f 0%, #0b1628 55%, #06101f 100%)",
+          }}
+        />
+        <div
+          className="pointer-events-none absolute inset-0 rounded-[22px]"
+          style={{
+            background:
+              "radial-gradient(90% 80% at 20% 0%, rgba(32,213,221,0.10) 0%, transparent 55%)",
+          }}
+        />
+
+        <div className="relative px-6 pt-5">
+          {/* Header */}
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-2.5">
+              <span
+                className="flex h-9 w-9 items-center justify-center rounded-xl"
+                style={{ backgroundColor: `${iconColor}1f`, color: iconColor }}
+              >
+                <Icon size={18} />
+              </span>
+              <h2 className="text-[15px] font-bold text-(--text-primary)">
+                {reaction ? reactionText(reaction) : message.title}
+              </h2>
+            </div>
+            <button
+              type="button"
+              aria-label="Dismiss"
+              onClick={() => respond("skip")}
+              className="btn-focus -mr-1 -mt-1 flex h-7 w-7 items-center justify-center rounded-full text-(--text-muted) transition hover:bg-white/5 hover:text-(--text-primary)"
+            >
+              <X size={15} />
+            </button>
+          </div>
+
+          {/* Body */}
           {!reaction && (
-            <div className="mt-3 flex items-center gap-2">
+            <>
+              <p className="mt-2.5 text-[13px] leading-relaxed text-(--text-secondary)">
+                {message.body}
+              </p>
+              <p className="mt-1 text-[11px] text-(--text-muted)">
+                Take a moment — it will boost your focus and energy.
+              </p>
+            </>
+          )}
+        </div>
+
+        {/* Footer: actions + Kibo */}
+        <div className="relative flex items-end justify-between gap-3 px-6 pb-4 pt-3">
+          {!reaction ? (
+            <div className="flex min-w-0 shrink flex-col gap-1.5">
               <button
-                className="rounded-xl bg-sky-500 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-sky-600"
+                type="button"
                 onClick={() => respond("done")}
+                className="btn-focus w-full rounded-xl bg-linear-to-r from-(--accent-cyan) to-(--accent-cyan-strong) px-4 py-2 text-[13px] font-semibold text-[#02131b] transition hover:brightness-110"
               >
                 {message.done}
               </button>
-              <button
-                className="rounded-xl bg-slate-200 px-3 py-1.5 text-sm font-medium transition hover:bg-slate-300"
-                onClick={() => respond("snooze")}
-              >
-                +5 min
-              </button>
-              <button
-                className="rounded-xl px-3 py-1.5 text-sm font-medium text-slate-400 transition hover:text-slate-600"
-                onClick={() => respond("skip")}
-              >
-                Skip
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => respond("snooze")}
+                  className="btn-focus flex-1 rounded-xl border border-(--border-strong) bg-white/5 px-3 py-1.5 text-[12px] font-medium text-(--text-secondary) transition hover:bg-white/10 hover:text-(--text-primary)"
+                >
+                  +5 min
+                </button>
+                <button
+                  type="button"
+                  onClick={() => respond("skip")}
+                  className="btn-focus flex-1 rounded-xl px-3 py-1.5 text-[12px] font-medium text-(--text-muted) transition hover:text-(--text-secondary)"
+                >
+                  Skip
+                </button>
+              </div>
             </div>
+          ) : (
+            <div className="flex-1" />
           )}
-        </Bubble>
-      </div>
-      <div className="absolute right-6 bottom-0 h-32 w-28">
-        <Robot variant={variant} className={`h-full w-full robot-enter`} />
+          <div className="pointer-events-none flex h-28 w-28 shrink-0 items-end justify-end">
+            <KiboMascot state={mascotState} className="h-full w-full" />
+          </div>
+        </div>
       </div>
     </div>
   );

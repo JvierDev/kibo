@@ -1,22 +1,141 @@
 @import "tailwindcss";
 
 :root {
+  --bg-primary: #020817;
+  --bg-secondary: #06101f;
+  --surface: #0b1628;
+  --surface-hover: #0d1b2f;
+  --border: rgba(110, 160, 210, 0.15);
+  --border-strong: rgba(110, 160, 210, 0.28);
+
+  --text-primary: #f8fafc;
+  --text-secondary: #9fb0c8;
+  --text-muted: #6f829e;
+
+  --accent-cyan: #20d5dd;
+  --accent-cyan-strong: #22c7d6;
+  --accent-coral: #ff6f59;
+  --accent-orange: #ff8748;
+  --accent-teal: #2fb8a6;
+
+  --progress-track: #18273d;
+
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 22px;
+
+  --shadow-soft: 0 18px 50px -20px rgba(0, 0, 0, 0.8);
+
   font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+}
+
+/* Register custom colors with Tailwind so utilities compile. */
+@theme {
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-border-subtle: var(--border);
+  --color-primary-text: var(--text-primary);
+  --color-secondary-text: var(--text-secondary);
+  --color-muted-text: var(--text-muted);
+  --color-accent-cyan: var(--accent-cyan);
+  --color-accent-coral: var(--accent-coral);
+  --color-accent-orange: var(--accent-orange);
+  --color-accent-teal: var(--accent-teal);
+  --color-progress-track: var(--progress-track);
 }
 
 html,
 body,
 #root {
   height: 100%;
+  margin: 0;
 }
 
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+/* ---- Thin dark scrollbar ------------------------------------------- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(30, 50, 80, 0.8);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(50, 75, 115, 0.9);
+}
+
+/* ---- Shared component classes -------------------------------------- */
+.glass-card {
+  background: linear-gradient(
+    180deg,
+    rgba(13, 27, 47, 0.55),
+    rgba(11, 22, 40, 0.55)
+  );
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.card-hover {
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background-color 0.18s ease;
+}
+.card-hover:hover {
+  border-color: var(--border-strong);
+  background-color: var(--surface-hover);
+}
+
+.section-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.btn-focus {
+  outline: none;
+}
+.btn-focus:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 2px;
+}
+
+/* ---- Drag regions --------------------------------------------------- */
+.app-region-drag {
+  -webkit-app-region: drag;
+}
+.app-region-no-drag,
+button,
+a,
+input,
+select,
+label[class*="cursor"] {
+  -webkit-app-region: no-drag;
+}
+
+/* ---- Animations ------------------------------------------------------ */
 @keyframes kibo-enter {
   from {
     opacity: 0;
-    transform: translateY(16px) scale(0.92);
+    transform: translateY(16px) scale(0.96);
   }
   to {
     opacity: 1;
@@ -37,7 +156,7 @@ body,
 @keyframes kibo-celebrate {
   0%,
   100% {
-    transform: rotate(-4deg) translateY(0);
+    transform: rotate(-3deg) translateY(0);
   }
   30% {
     transform: rotate(5deg) translateY(-12px);
@@ -66,17 +185,27 @@ body,
     transform: none;
   }
   30% {
-    transform: rotate(7deg) translateX(4px);
+    transform: rotate(6deg) translateX(4px);
   }
   60% {
-    transform: rotate(-7deg) translateX(-4px);
+    transform: rotate(-6deg) translateX(-4px);
   }
 }
 
-@keyframes kibo-bubble {
+@keyframes kibo-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes popup-enter {
   from {
     opacity: 0;
-    transform: translateY(10px) scale(0.94);
+    transform: translateY(14px) scale(0.96);
   }
   to {
     opacity: 1;
@@ -84,26 +213,61 @@ body,
   }
 }
 
-.robot-enter {
-  animation: kibo-enter 0.35s ease-out;
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
-.robot-idle {
-  animation: kibo-idle 3s ease-in-out infinite;
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
-.robot-celebrate {
+.animate-enter {
+  animation: kibo-enter 0.3s ease-out;
+}
+.anim-idle {
+  animation: kibo-idle 3.2s ease-in-out infinite;
+}
+.anim-celebrate {
   animation: kibo-celebrate 0.9s ease-in-out;
 }
-
-.robot-nod {
+.anim-nod {
   animation: kibo-nod 0.9s ease-in-out;
 }
-
-.robot-shrug {
+.anim-shrug {
   animation: kibo-shrug 0.9s ease-in-out;
 }
+.anim-bob {
+  animation: kibo-bob 3.4s ease-in-out infinite;
+}
+.anim-popup {
+  animation: popup-enter 0.26s ease-out;
+}
+.anim-fade {
+  animation: fade-in 0.25s ease-out;
+}
+.anim-rise {
+  animation: rise-in 0.3s ease-out both;
+}
 
-.bubble-in {
-  animation: kibo-bubble 0.28s ease-out;
+/* ---- Reduced motion -------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
