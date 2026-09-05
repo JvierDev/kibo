@@ -27,6 +27,7 @@ export interface KiboState {
   settings: Settings;
   today: Partial<Record<ReminderId, number>>;
   nextReminder: NextReminder | null;
+  activeReminder: ReminderId | null;
 }
 
 export interface ReactionEvent {

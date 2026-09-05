@@ -34,6 +34,7 @@ export function registerIpc(deps: IpcDeps): void {
     settings: store.getSettings(),
     today: store.getTodayStats(),
     nextReminder: engine.nextDue(),
+    activeReminder: engine.getActiveReminder(),
   });
 
   ipcMain.handle(IPC.GET_STATE, () => buildState());
