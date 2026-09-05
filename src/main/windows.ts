@@ -2,8 +2,8 @@ import { BrowserWindow, screen } from "electron";
 import { join } from "path";
 import { is } from "@electron-toolkit/utils";
 
-export const MASCOT_WIDTH = 340;
-export const MASCOT_HEIGHT = 300;
+export const MASCOT_WIDTH = 420;
+export const MASCOT_HEIGHT = 360;
 
 const PRELOAD_PATH = join(__dirname, "../preload/index.mjs");
 
@@ -17,18 +17,20 @@ function loadWindow(window: BrowserWindow, hash: string): void {
 
 export function createSettingsWindow(): BrowserWindow {
   const win = new BrowserWindow({
-    width: 760,
-    height: 640,
+    width: 960,
+    height: 720,
+    minWidth: 760,
+    minHeight: 650,
     show: false,
     autoHideMenuBar: true,
     title: "Kibo",
-    backgroundColor: "#020617",
+    backgroundColor: "#020817",
     webPreferences: {
       preload: PRELOAD_PATH,
       sandbox: false,
     },
   });
-  loadWindow(win, "#/dashboard");
+  loadWindow(win, "#/home");
   return win;
 }
 
