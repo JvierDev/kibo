@@ -1,52 +1,161 @@
-import { app, shell, BrowserWindow } from 'electron'
-import { join } from 'path'
-import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import { app, BrowserWindow, shell } from "electron";
+import { electronApp, optimizer } from "@electron-toolkit/utils";
+import { IPC } from "../shared/ipc";
+import type { ReminderId } from "../shared/types";
+import { ActivityMonitor } from "./activityMonitor";
+import { registerIpc } from "./ipc";
+import { ReminderEngine } from "./reminderEngine";
+import { KiboStore } from "./store";
+import { createTray, refreshTrayMenu, type TrayDeps } from "./tray";
+import {
+  createMascotWindow,
+  createSettingsWindow,
+  positionMascot,
+} from "./windows";
 
-function createWindow(): void {
-  const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
-    show: false,
-    autoHideMenuBar: true,
-    title: 'Kibo',
-    webPreferences: {
-      preload: join(__dirname, '../preload/index.mjs'),
-      sandbox: false
-    }
-  })
+let settingsWindow: BrowserWindow | null = null;
+let mascotWindow: BrowserWindow | null = null;
+let isQuitting = false;
 
-  mainWindow.on('ready-to-show', () => {
-    mainWindow.show()
-  })
+function getSettingsWindow(): BrowserWindow {
+  if (!settingsWindow || settingsWindow.isDestroyed()) {
+    settingsWindow = createSettingsWindow();
+    settingsWindow.on("close", (event) => {
+      if (!isQuitting) {
+        event.preventDefault();
+        settingsWindow?.hide();
+      }
+    });
+    settingsWindow.webContents.setWindowOpenHandler((details) => {
+      shell.openExternal(details.url);
+      return { action: "deny" };
+    });
+  }
+  return settingsWindow;
+}
 
-  mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
-    return { action: 'deny' }
-  })
+function showSettings(): void {
+  getSettingsWindow().show();
+}
 
-  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
-  } else {
-    mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+function hideSettings(): void {
+  settingsWindow?.hide();
+}
+
+function broadcast(channel: string, payload?: unknown): void {
+  for (const win of BrowserWindow.getAllWindows()) {
+    win.webContents.send(channel, payload);
+  }
+}
+
+function showMascot(id: ReminderId): void {
+  if (!mascotWindow || mascotWindow.isDestroyed()) {
+    mascotWindow = createMascotWindow();
+    mascotWindow.webContents.setWindowOpenHandler((details) => {
+      shell.openExternal(details.url);
+      return { action: "deny" };
+    });
+    mascotWindow.once("ready-to-show", () => {
+      if (mascotWindow && !mascotWindow.isDestroyed()) {
+        positionMascot(mascotWindow);
+        mascotWindow.webContents.send(IPC.EVT_REMINDER, id);
+        mascotWindow.show();
+      }
+    });
+    return;
+  }
+  positionMascot(mascotWindow);
+  mascotWindow.webContents.send(IPC.EVT_REMINDER, id);
+  mascotWindow.show();
+}
+
+function hideMascot(): void {
+  if (mascotWindow && !mascotWindow.isDestroyed()) {
+    mascotWindow.hide();
+    mascotWindow.webContents.reload();
   }
 }
 
 app.whenReady().then(() => {
-  electronApp.setAppUserModelId('com.kibo.app')
+  electronApp.setAppUserModelId("com.kibo.app");
+  app.on("browser-window-created", (_, window) => {
+    optimizer.watchWindowShortcuts(window);
+  });
 
-  app.on('browser-window-created', (_, window) => {
-    optimizer.watchWindowShortcuts(window)
-  })
+  const store = new KiboStore();
+  const settings = store.getSettings();
+  const engine = new ReminderEngine({
+    configs: settings.reminders,
+    paused: settings.paused,
+    snoozeMinutes: settings.snoozeMinutes,
+  });
+  const monitor = new ActivityMonitor();
 
-  createWindow()
+  let tray: ReturnType<typeof createTray> | null = null;
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
-  })
-})
+  const trayDeps: TrayDeps = {
+    engine,
+    onTogglePause: () => {
+      const paused = !engine.getPaused();
+      engine.setPaused(paused);
+      store.setSettings({ paused });
+      broadcast(IPC.EVT_STATE);
+    },
+    onTrigger: (id) => engine.triggerNow(id),
+    onOpenSettings: () => showSettings(),
+    onQuit: () => {
+      isQuitting = true;
+      app.quit();
+    },
+  };
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
+  engine.on("fire", (id) => showMascot(id));
+  engine.on("change", () => {
+    if (tray) refreshTrayMenu(tray, trayDeps);
+  });
+
+  monitor.onActiveTick = (activeSeconds) => engine.tick(activeSeconds);
+  monitor.onBreak = () => engine.resetClocks();
+
+  const applyAutoStart = (enabled: boolean): boolean => {
+    const options = process.platform === "darwin" ? { openAsHidden: true } : {};
+    app.setLoginItemSettings({ openAtLogin: enabled, ...options });
+    return app.getLoginItemSettings().openAtLogin;
+  };
+
+  registerIpc({
+    engine,
+    store,
+    broadcast,
+    setAutoStart: applyAutoStart,
+    quit: () => {
+      isQuitting = true;
+      app.quit();
+    },
+    hideSettings,
+    hideMascot,
+  });
+
+  tray = createTray(trayDeps);
+
+  setInterval(() => {
+    if (tray) refreshTrayMenu(tray, trayDeps);
+  }, 60_000);
+
+  monitor.start();
+
+  if (store.isFirstRun()) {
+    store.markSeen();
+    showSettings();
   }
-})
+
+  app.on("activate", () => showSettings());
+});
+
+app.on("before-quit", () => {
+  isQuitting = true;
+});
+
+app.on("window-all-closed", () => {
+  // Tray app: keep running until the user quits from the tray.
+});

@@ -71,6 +71,10 @@ export class ReminderEngine extends EventEmitter {
     this.emitChange();
   }
 
+  getPaused(): boolean {
+    return this.paused;
+  }
+
   /** Advance the active clock by `deltaSeconds` of continuous system use. */
   tick(deltaSeconds: number): void {
     this.activeSeconds += deltaSeconds;
