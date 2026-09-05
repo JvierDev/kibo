@@ -55,13 +55,16 @@ function showMascot(id: ReminderId): void {
       shell.openExternal(details.url);
       return { action: "deny" };
     });
-    mascotWindow.once("ready-to-show", () => {
-      if (mascotWindow && !mascotWindow.isDestroyed()) {
-        positionMascot(mascotWindow);
-        mascotWindow.webContents.send(IPC.EVT_REMINDER, id);
-        mascotWindow.show();
-      }
-    });
+    let revealed = false;
+    const reveal = (): void => {
+      if (revealed || !mascotWindow || mascotWindow.isDestroyed()) return;
+      revealed = true;
+      positionMascot(mascotWindow);
+      mascotWindow.webContents.send(IPC.EVT_REMINDER, id);
+      mascotWindow.show();
+    };
+    mascotWindow.once("ready-to-show", reveal);
+    mascotWindow.webContents.once("did-finish-load", reveal);
     return;
   }
   positionMascot(mascotWindow);
@@ -114,7 +117,6 @@ app.whenReady().then(() => {
     if (tray) refreshTrayMenu(tray, trayDeps);
   });
 
-  monitor.onActiveTick = (activeSeconds) => engine.tick(activeSeconds);
   monitor.onBreak = () => engine.resetClocks();
 
   const applyAutoStart = (enabled: boolean): boolean => {
@@ -139,8 +141,9 @@ app.whenReady().then(() => {
   tray = createTray(trayDeps);
 
   setInterval(() => {
+    engine.checkNow();
     if (tray) refreshTrayMenu(tray, trayDeps);
-  }, 60_000);
+  }, 15_000);
 
   monitor.start();
 

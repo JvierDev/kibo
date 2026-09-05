@@ -12,7 +12,8 @@ export interface TrayDeps {
 }
 
 function minutesLabel(next: { secondsRemaining: number }): string {
-  return `${Math.max(1, Math.ceil(next.secondsRemaining / 60))} min`;
+  if (next.secondsRemaining < 60) return "now";
+  return `${Math.ceil(next.secondsRemaining / 60)} min`;
 }
 
 export function buildMenu(deps: TrayDeps): Menu {
