@@ -1,4 +1,5 @@
 import { app, BrowserWindow, Notification, shell } from "electron";
+import { join } from "path";
 import { electronApp, optimizer } from "@electron-toolkit/utils";
 import { IPC } from "../shared/ipc";
 import { REMINDER_LABELS, type ReminderId } from "../shared/types";
@@ -90,6 +91,10 @@ const gotSingleInstanceLock = app.requestSingleInstanceLock();
 if (!gotSingleInstanceLock) {
   app.quit();
 } else {
+  if (process.platform === "darwin" && !app.isPackaged) {
+    app.dock?.setIcon(join(__dirname, "../../build/icon.png"));
+  }
+
   app.on("second-instance", () => {
     showSettings();
   });

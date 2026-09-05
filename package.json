@@ -1,7 +1,7 @@
 {
   "name": "kibo",
-  "version": "1.0.0",
-  "description": "Kibo desktop app",
+  "version": "0.2.0",
+  "description": "Kibo — your healthy-work companion",
   "main": "out/main/index.js",
   "type": "module",
   "private": true,
