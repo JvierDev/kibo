@@ -1,36 +1,44 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Robot, type RobotVariant } from "../components/Robot";
-import type { ReminderAction, ReminderId } from "../../../shared/types";
-
-const MESSAGES: Record<
+import type {
+  ReactionEvent,
+  ReminderAction,
   ReminderId,
-  { title: string; body: string; done: string }
-> = {
-  water: {
-    title: "Hydration check",
-    body: "Grab some water.",
-    done: "Grab water",
-  },
-  stretch: {
-    title: "Stretch time",
-    body: "You've been sitting a while.",
-    done: "I stretched",
-  },
-  walk: {
-    title: "Walk break",
-    body: "How about a quick walk?",
-    done: "I'll walk",
-  },
-};
+} from "../../../shared/types";
+import { milestoneText, pickMessage } from "./messages";
 
 const REACTIONS: Record<
   ReminderAction,
-  { text: string; variant: RobotVariant }
+  { text: (event?: ReactionEvent) => string; variant: RobotVariant }
 > = {
-  done: { text: "Nice!", variant: "celebrate" },
-  snooze: { text: "I'll remind you shortly.", variant: "nod" },
-  skip: { text: "No problem.", variant: "shrug" },
+  done: {
+    text: (event) => {
+      const milestone = event?.count ? milestoneText(event.count) : null;
+      return milestone ?? "Nice!";
+    },
+    variant: "celebrate",
+  },
+  snooze: { text: () => "I'll remind you shortly.", variant: "nod" },
+  skip: { text: () => "No problem.", variant: "shrug" },
 };
+
+function playChime(): void {
+  const ctx = new AudioContext();
+  const notes = [880, 1318.52];
+  notes.forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = freq;
+    const start = ctx.currentTime + i * 0.18;
+    gain.gain.setValueAtTime(0, start);
+    gain.gain.linearRampToValueAtTime(0.12, start + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.7);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(start);
+    osc.stop(start + 0.8);
+  });
+}
 
 function Bubble({
   children,
@@ -47,29 +55,43 @@ function Bubble({
 
 export function Mascot(): React.JSX.Element {
   const [reminder, setReminder] = useState<ReminderId | null>(null);
-  const [reaction, setReaction] = useState<{
-    action: ReminderAction;
-    id: ReminderId;
-  } | null>(null);
+  const [reaction, setReaction] = useState<ReactionEvent | null>(null);
+  const reminderRef = useRef<ReminderId | null>(null);
+  const shownCount = useRef<Record<ReminderId, number>>({
+    water: 0,
+    stretch: 0,
+    walk: 0,
+  });
 
   useEffect(() => {
     let mounted = true;
     window.kibo.getState().then((state) => {
-      if (mounted && state.activeReminder) setReminder(state.activeReminder);
+      if (mounted && state.activeReminder) {
+        reminderRef.current = state.activeReminder;
+        setReminder(state.activeReminder);
+      }
     });
     const offReminder = window.kibo.onReminder((id) => {
-      if (mounted) setReminder(id);
+      if (!mounted) return;
+      playChime();
+      shownCount.current[id] += 1;
+      reminderRef.current = id;
+      setReminder(id);
+    });
+    const offReaction = window.kibo.onReaction((event) => {
+      if (mounted && reminderRef.current) setReaction(event);
     });
     return () => {
       mounted = false;
       offReminder();
+      offReaction();
     };
   }, []);
 
   if (!reminder) return <div className="h-full w-full" />;
 
   const variant = reaction ? REACTIONS[reaction.action].variant : "idle";
-  const message = MESSAGES[reminder];
+  const message = pickMessage(reminder, shownCount.current[reminder]);
 
   const respond = (action: ReminderAction): void => {
     if (reaction) return;
@@ -83,7 +105,7 @@ export function Mascot(): React.JSX.Element {
         <Bubble>
           <p className="text-sm font-semibold">
             {reaction ? (
-              REACTIONS[reaction.action].text
+              REACTIONS[reaction.action].text(reaction)
             ) : (
               <>
                 {message.title}

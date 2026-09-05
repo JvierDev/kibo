@@ -1,7 +1,7 @@
-import { app, BrowserWindow, shell } from "electron";
+import { app, BrowserWindow, Notification, shell } from "electron";
 import { electronApp, optimizer } from "@electron-toolkit/utils";
 import { IPC } from "../shared/ipc";
-import type { ReminderId } from "../shared/types";
+import { REMINDER_LABELS, type ReminderId } from "../shared/types";
 import { ActivityMonitor } from "./activityMonitor";
 import { registerIpc } from "./ipc";
 import { ReminderEngine } from "./reminderEngine";
@@ -79,86 +79,111 @@ function hideMascot(): void {
   }
 }
 
-app.whenReady().then(() => {
-  electronApp.setAppUserModelId("com.kibo.app");
-  app.on("browser-window-created", (_, window) => {
-    optimizer.watchWindowShortcuts(window);
-  });
+const NOTIFICATION_BODY: Record<ReminderId, string> = {
+  water: "Grab some water.",
+  stretch: "Time to stretch your legs.",
+  walk: "How about a quick walk?",
+};
 
-  const store = new KiboStore();
-  const settings = store.getSettings();
-  const engine = new ReminderEngine({
-    configs: settings.reminders,
-    paused: settings.paused,
-    snoozeMinutes: settings.snoozeMinutes,
-  });
-  const monitor = new ActivityMonitor();
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
 
-  let tray: ReturnType<typeof createTray> | null = null;
-
-  const trayDeps: TrayDeps = {
-    engine,
-    onTogglePause: () => {
-      const paused = !engine.getPaused();
-      engine.setPaused(paused);
-      store.setSettings({ paused });
-      broadcast(IPC.EVT_STATE);
-    },
-    onTrigger: (id) => engine.triggerNow(id),
-    onOpenSettings: () => showSettings(),
-    onQuit: () => {
-      isQuitting = true;
-      app.quit();
-    },
-  };
-
-  engine.on("fire", (id) => showMascot(id));
-  engine.on("change", () => {
-    if (tray) refreshTrayMenu(tray, trayDeps);
-  });
-
-  monitor.onBreak = () => engine.resetClocks();
-
-  const applyAutoStart = (enabled: boolean): boolean => {
-    const options = process.platform === "darwin" ? { openAsHidden: true } : {};
-    app.setLoginItemSettings({ openAtLogin: enabled, ...options });
-    return app.getLoginItemSettings().openAtLogin;
-  };
-
-  registerIpc({
-    engine,
-    store,
-    broadcast,
-    setAutoStart: applyAutoStart,
-    quit: () => {
-      isQuitting = true;
-      app.quit();
-    },
-    hideSettings,
-    hideMascot,
-  });
-
-  tray = createTray(trayDeps);
-
-  setInterval(() => {
-    engine.checkNow();
-    if (tray) refreshTrayMenu(tray, trayDeps);
-  }, 15_000);
-
-  monitor.start();
-
-  if (store.isFirstRun()) {
-    store.markSeen();
+if (!gotSingleInstanceLock) {
+  app.quit();
+} else {
+  app.on("second-instance", () => {
     showSettings();
-  }
+  });
 
-  app.on("activate", () => showSettings());
-});
+  app.whenReady().then(() => {
+    electronApp.setAppUserModelId("com.kibo.app");
+    app.on("browser-window-created", (_, window) => {
+      optimizer.watchWindowShortcuts(window);
+    });
 
-app.on("before-quit", () => {
-  isQuitting = true;
-});
+    const store = new KiboStore();
+    const settings = store.getSettings();
+    const engine = new ReminderEngine({
+      configs: settings.reminders,
+      paused: settings.paused,
+      snoozeMinutes: settings.snoozeMinutes,
+    });
+    const monitor = new ActivityMonitor();
 
-app.on("window-all-closed", () => {
-  // Tray app: keep running until the user quits from the tray.
-});
+    let tray: ReturnType<typeof createTray> | null = null;
+
+    const trayDeps: TrayDeps = {
+      engine,
+      onTogglePause: () => {
+        const paused = !engine.getPaused();
+        engine.setPaused(paused);
+        store.setSettings({ paused });
+        broadcast(IPC.EVT_STATE);
+      },
+      onTrigger: (id) => engine.triggerNow(id),
+      onOpenSettings: () => showSettings(),
+      onQuit: () => {
+        isQuitting = true;
+        app.quit();
+      },
+    };
+
+    engine.on("fire", (id: ReminderId) => {
+      showMascot(id);
+      if (monitor.getStatus() !== "active" && Notification.isSupported()) {
+        new Notification({
+          title: `Time for ${REMINDER_LABELS[id].toLowerCase()}`,
+          body: NOTIFICATION_BODY[id],
+        }).show();
+      }
+    });
+    engine.on("change", () => {
+      if (tray) refreshTrayMenu(tray, trayDeps);
+    });
+
+    monitor.onBreak = () => engine.resetClocks();
+
+    const applyAutoStart = (enabled: boolean): boolean => {
+      const options =
+        process.platform === "darwin" ? { openAsHidden: true } : {};
+      app.setLoginItemSettings({ openAtLogin: enabled, ...options });
+      return app.getLoginItemSettings().openAtLogin;
+    };
+
+    registerIpc({
+      engine,
+      store,
+      broadcast,
+      setAutoStart: applyAutoStart,
+      quit: () => {
+        isQuitting = true;
+        app.quit();
+      },
+      hideSettings,
+      hideMascot,
+    });
+
+    tray = createTray(trayDeps);
+
+    setInterval(() => {
+      engine.checkNow();
+      if (tray) refreshTrayMenu(tray, trayDeps);
+    }, 15_000);
+
+    monitor.start();
+
+    if (store.isFirstRun()) {
+      store.markSeen();
+      showSettings();
+    }
+
+    app.on("activate", () => showSettings());
+  });
+
+  app.on("before-quit", () => {
+    isQuitting = true;
+  });
+
+  app.on("window-all-closed", () => {
+    // Tray app: keep running until the user quits from the tray.
+  });
+}

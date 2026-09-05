@@ -18,6 +18,11 @@ export interface Settings {
 
 export type DailyStats = Record<string, Partial<Record<ReminderId, number>>>;
 
+export interface WeekEntry {
+  day: string;
+  counts: Partial<Record<ReminderId, number>>;
+}
+
 export interface NextReminder {
   id: ReminderId;
   secondsRemaining: number;
@@ -26,6 +31,8 @@ export interface NextReminder {
 export interface KiboState {
   settings: Settings;
   today: Partial<Record<ReminderId, number>>;
+  week: WeekEntry[];
+  streak: number;
   nextReminder: NextReminder | null;
   activeReminder: ReminderId | null;
 }
@@ -33,6 +40,7 @@ export interface KiboState {
 export interface ReactionEvent {
   id: ReminderId;
   action: ReminderAction;
+  count?: number;
 }
 
 export interface KiboApi {
