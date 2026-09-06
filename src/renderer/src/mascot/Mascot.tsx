@@ -129,9 +129,9 @@ export function Mascot(): React.JSX.Element {
           }}
         />
 
-        <div className="relative px-6 pt-5">
+        <div className="relative">
           {/* Header */}
-          <div className="flex items-start justify-between">
+          <div className="flex items-start justify-between px-6 pt-5">
             <div className="flex items-center gap-2.5">
               <span
                 className="flex h-9 w-9 items-center justify-center rounded-xl"
@@ -147,59 +147,57 @@ export function Mascot(): React.JSX.Element {
               type="button"
               aria-label="Dismiss"
               onClick={() => respond("skip")}
-              className="btn-focus -mr-1 -mt-1 flex h-7 w-7 items-center justify-center rounded-full text-(--text-muted) transition hover:bg-white/5 hover:text-(--text-primary)"
+              className="btn-focus -mr-1 -mt-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-(--text-muted) transition hover:bg-white/5 hover:text-(--text-primary)"
             >
               <X size={15} />
             </button>
           </div>
 
-          {/* Body */}
+          {/* Body: text + Kibo */}
+        <div className="flex items-center gap-3 px-6 pt-3">
           {!reaction && (
-            <>
-              <p className="mt-2.5 text-[13px] leading-relaxed text-(--text-secondary)">
+            <div className="min-w-0 flex-1">
+              <p className="text-[13px] leading-relaxed text-(--text-secondary)">
                 {message.body}
               </p>
               <p className="mt-1 text-[11px] text-(--text-muted)">
                 Take a moment — it will boost your focus and energy.
               </p>
-            </>
+            </div>
           )}
+          <div className="pointer-events-none flex h-24 w-24 shrink-0 items-end justify-end">
+            <KiboMascot state={mascotState} className="h-full w-full" />
+          </div>
+        </div>
         </div>
 
-        {/* Footer: actions + Kibo */}
-        <div className="relative flex items-end justify-between gap-3 px-6 pb-4 pt-3">
-          {!reaction ? (
-            <div className="flex min-w-0 shrink flex-col gap-1.5">
+        {/* Footer: actions */}
+        <div className="relative px-6 pt-3 pb-4">
+          {!reaction && (
+            <div className="flex gap-1.5">
               <button
                 type="button"
                 onClick={() => respond("done")}
-                className="btn-focus w-full rounded-xl bg-linear-to-r from-(--accent-cyan) to-(--accent-cyan-strong) px-4 py-2 text-[13px] font-semibold text-[#02131b] transition hover:brightness-110"
+                className="btn-focus flex-1 cursor-pointer rounded-xl bg-linear-to-r from-(--accent-cyan) to-(--accent-cyan-strong) px-3 py-2 text-[13px] font-semibold text-[#02131b] transition hover:brightness-110"
               >
                 {message.done}
               </button>
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => respond("snooze")}
-                  className="btn-focus flex-1 rounded-xl border border-(--border-strong) bg-white/5 px-3 py-1.5 text-[12px] font-medium text-(--text-secondary) transition hover:bg-white/10 hover:text-(--text-primary)"
-                >
-                  +5 min
-                </button>
-                <button
-                  type="button"
-                  onClick={() => respond("skip")}
-                  className="btn-focus flex-1 rounded-xl px-3 py-1.5 text-[12px] font-medium text-(--text-muted) transition hover:text-(--text-secondary)"
-                >
-                  Skip
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => respond("snooze")}
+                className="btn-focus flex-1 cursor-pointer rounded-xl border border-(--border-strong) bg-white/5 px-3 py-2 text-[12px] font-medium text-(--text-secondary) transition hover:bg-white/10 hover:text-(--text-primary)"
+              >
+                +5 min
+              </button>
+              <button
+                type="button"
+                onClick={() => respond("skip")}
+                className="btn-focus flex-1 cursor-pointer rounded-xl px-3 py-2 text-[12px] font-medium text-(--text-muted) transition hover:text-(--text-secondary)"
+              >
+                Skip
+              </button>
             </div>
-          ) : (
-            <div className="flex-1" />
           )}
-          <div className="pointer-events-none flex h-28 w-28 shrink-0 items-end justify-end">
-            <KiboMascot state={mascotState} className="h-full w-full" />
-          </div>
         </div>
       </div>
     </div>
