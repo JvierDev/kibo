@@ -116,7 +116,14 @@ export function HomePage(): React.JSX.Element {
               you.
             </h1>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="pointer-events-none relative h-40 w-40 shrink-0">
+            <KiboMascot
+              state={settings.paused ? "sleep" : "happy"}
+              className="h-full w-full"
+            />
+            <div className="absolute inset-x-6 bottom-0 h-3 rounded-full bg-black/40 blur-md" />
+          </div>
+          <div className="flex shrink-0 flex-col items-end gap-2">
             {streak > 0 && (
               <span className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(255,135,72,0.3)] bg-[rgba(255,135,72,0.14)] px-3 py-1.5 text-sm font-medium text-(--accent-orange)">
                 <Flame size={15} className="fill-current" />
@@ -139,18 +146,11 @@ export function HomePage(): React.JSX.Element {
           </div>
         </div>
 
-        {/* Bottom row: subtitle + mascot */}
+        {/* Bottom row: subtitle */}
         <div className="relative mt-4 flex items-end justify-between gap-4">
           <p className="max-w-[46%] text-sm leading-relaxed text-(--text-muted)">
             Stay hydrated, move a little, feel a lot better.
           </p>
-          <div className="pointer-events-none relative h-40 w-40 shrink-0 md:h-44 md:w-44">
-            <KiboMascot
-              state={settings.paused ? "sleep" : "happy"}
-              className="h-full w-full"
-            />
-            <div className="absolute inset-x-6 bottom-0 h-3 rounded-full bg-black/40 blur-md" />
-          </div>
         </div>
       </section>
 

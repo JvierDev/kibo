@@ -18,9 +18,9 @@ function loadWindow(window: BrowserWindow, hash: string): void {
 export function createSettingsWindow(): BrowserWindow {
   const win = new BrowserWindow({
     width: 960,
-    height: 720,
-    minWidth: 760,
-    minHeight: 650,
+    height: 840,
+    minWidth: 960,
+    minHeight: 840,
     show: false,
     autoHideMenuBar: true,
     title: "Kibo",
