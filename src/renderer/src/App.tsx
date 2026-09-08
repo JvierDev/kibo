@@ -29,6 +29,12 @@ function App(): React.JSX.Element {
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
+  useEffect(() => {
+    return window.kibo.onNavigate((route) => {
+      window.location.hash = `/${route}`;
+    });
+  }, []);
+
   if (window.location.hash.startsWith("#/mascot")) {
     return <Mascot />;
   }

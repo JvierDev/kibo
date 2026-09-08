@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer } from "electron";
 import { electronAPI } from "@electron-toolkit/preload";
 import { IPC } from "../shared/ipc";
 import type {
+  AppRoute,
   KiboApi,
   ReactionEvent,
   ReminderAction,
@@ -37,6 +38,11 @@ const api: KiboApi = {
     const listener = (): void => cb();
     ipcRenderer.on(IPC.EVT_STATE, listener);
     return () => ipcRenderer.removeListener(IPC.EVT_STATE, listener);
+  },
+  onNavigate: (cb: (route: AppRoute) => void) => {
+    const listener = (_: unknown, route: AppRoute): void => cb(route);
+    ipcRenderer.on(IPC.NAVIGATE, listener);
+    return () => ipcRenderer.removeListener(IPC.NAVIGATE, listener);
   },
 };
 

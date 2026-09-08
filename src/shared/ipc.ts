@@ -8,6 +8,7 @@ export const IPC = {
   RESPOND: "kibo:respond",
   HIDE_SETTINGS: "kibo:hideSettings",
   QUIT: "kibo:quit",
+  NAVIGATE: "kibo:navigate",
   EVT_REMINDER: "kibo:ev-reminder",
   EVT_REACTION: "kibo:ev-reaction",
   EVT_STATE: "kibo:ev-state",

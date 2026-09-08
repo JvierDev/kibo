@@ -7,6 +7,7 @@ export interface TrayDeps {
   engine: ReminderEngine;
   onTogglePause: () => void;
   onTrigger: (id: ReminderId) => void;
+  onOpenApp: () => void;
   onOpenSettings: () => void;
   onQuit: () => void;
 }
@@ -17,7 +18,14 @@ function minutesLabel(next: { secondsRemaining: number }): string {
 }
 
 export function buildMenu(deps: TrayDeps): Menu {
-  const { engine, onTogglePause, onTrigger, onOpenSettings, onQuit } = deps;
+  const {
+    engine,
+    onTogglePause,
+    onTrigger,
+    onOpenApp,
+    onOpenSettings,
+    onQuit,
+  } = deps;
   const paused = engine.getPaused();
   const next = engine.nextDue();
 
@@ -31,7 +39,7 @@ export function buildMenu(deps: TrayDeps): Menu {
   }
 
   return Menu.buildFromTemplate([
-    { label: "Kibo", enabled: false },
+    { label: "Kibo", click: onOpenApp },
     { label: statusLabel, enabled: false },
     { type: "separator" },
     { label: "💧 Drink water", click: () => onTrigger("water") },
@@ -43,7 +51,7 @@ export function buildMenu(deps: TrayDeps): Menu {
       click: onTogglePause,
     },
     { type: "separator" },
-    { label: "⚙ Settings…", click: onOpenSettings },
+    { label: "⚙ Settings", click: onOpenSettings },
     { label: "✕ Quit", click: onQuit },
   ]);
 }

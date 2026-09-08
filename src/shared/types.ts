@@ -1,3 +1,5 @@
+export type AppRoute = "home" | "stats" | "settings" | "about";
+
 export type ReminderId = "water" | "stretch" | "walk";
 
 export type ReminderAction = "done" | "snooze" | "skip";
@@ -59,6 +61,7 @@ export interface KiboApi {
   onReminder(cb: (id: ReminderId) => void): () => void;
   onReaction(cb: (event: ReactionEvent) => void): () => void;
   onState(cb: () => void): () => void;
+  onNavigate(cb: (route: AppRoute) => void): () => void;
 }
 
 export const DEFAULT_REMINDERS: ReminderConfigs = {

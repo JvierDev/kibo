@@ -2,7 +2,11 @@ import { app, BrowserWindow, Notification, shell } from "electron";
 import { join } from "path";
 import { electronApp, optimizer } from "@electron-toolkit/utils";
 import { IPC } from "../shared/ipc";
-import { REMINDER_LABELS, type ReminderId } from "../shared/types";
+import {
+  REMINDER_LABELS,
+  type AppRoute,
+  type ReminderId,
+} from "../shared/types";
 import { ActivityMonitor } from "./activityMonitor";
 import { registerIpc } from "./ipc";
 import { ReminderEngine } from "./reminderEngine";
@@ -35,8 +39,10 @@ function getSettingsWindow(): BrowserWindow {
   return settingsWindow;
 }
 
-function showSettings(): void {
-  getSettingsWindow().show();
+function showSettings(route: AppRoute = "home"): void {
+  const win = getSettingsWindow();
+  win.webContents.send(IPC.NAVIGATE, route);
+  win.show();
 }
 
 function hideSettings(): void {
@@ -125,7 +131,8 @@ if (!gotSingleInstanceLock) {
         broadcast(IPC.EVT_STATE);
       },
       onTrigger: (id) => engine.triggerNow(id),
-      onOpenSettings: () => showSettings(),
+      onOpenApp: () => showSettings("home"),
+      onOpenSettings: () => showSettings("settings"),
       onQuit: () => {
         isQuitting = true;
         app.quit();

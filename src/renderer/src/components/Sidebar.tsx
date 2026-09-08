@@ -1,7 +1,8 @@
 import { Home, BarChart3, Settings, Info, Heart } from "lucide-react";
+import type { AppRoute } from "../../../shared/types";
 import { KiboMascot } from "./KiboMascot";
 
-export type Route = "home" | "stats" | "settings" | "about";
+export type Route = AppRoute;
 
 const NAV_ITEMS: { id: Route; label: string; icon: typeof Home }[] = [
   { id: "home", label: "Home", icon: Home },
