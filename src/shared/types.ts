@@ -51,7 +51,7 @@ export interface KiboApi {
   ): Promise<Settings>;
   setSnoozeMinutes(minutes: number): Promise<Settings>;
   setPaused(paused: boolean): Promise<Settings>;
-  setAutoStart(enabled: boolean): Promise<boolean>;
+  setAutoStart(enabled: boolean): Promise<KiboState>;
   triggerNow(id: ReminderId): Promise<void>;
   respondReminder(id: ReminderId, action: ReminderAction): Promise<void>;
   hideSettings(): Promise<void>;

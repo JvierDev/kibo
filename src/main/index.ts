@@ -149,7 +149,7 @@ if (!gotSingleInstanceLock) {
 
     const applyAutoStart = (enabled: boolean): boolean => {
       const options =
-        process.platform === "darwin" ? { openAsHidden: true } : {};
+        process.platform === "darwin" && enabled ? { openAsHidden: true } : {};
       app.setLoginItemSettings({ openAtLogin: enabled, ...options });
       return app.getLoginItemSettings().openAtLogin;
     };

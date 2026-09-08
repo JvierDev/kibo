@@ -70,9 +70,12 @@ export function registerIpc(deps: IpcDeps): void {
     return state;
   });
 
-  ipcMain.handle(IPC.SET_AUTOSTART, (_event, enabled: boolean): boolean => {
+  ipcMain.handle(IPC.SET_AUTOSTART, (_event, enabled: boolean): KiboState => {
     store.setSettings({ autoStart: enabled });
-    return setAutoStart(enabled);
+    setAutoStart(enabled);
+    const state = buildState();
+    broadcast(IPC.EVT_STATE, state);
+    return state;
   });
 
   ipcMain.handle(IPC.TRIGGER_NOW, (_event, id: ReminderId): void => {
