@@ -49,7 +49,7 @@ export function buildMenu(deps: TrayDeps): Menu {
 }
 
 export function createTray(deps: TrayDeps): Tray {
-  const iconPath = join(__dirname, "../../build/trayTemplate.png");
+  const iconPath = join(__dirname, "../../build/kiboTemplate.png");
   const image = nativeImage.createFromPath(iconPath);
   image.setTemplateImage(true);
   const tray = new Tray(image);
