@@ -29,6 +29,10 @@ export function createSettingsWindow(): BrowserWindow {
       preload: PRELOAD_PATH,
       sandbox: false,
     },
+    icon:
+      process.platform === "win32"
+        ? join(__dirname, "../../build/icon.ico")
+        : join(__dirname, "../../build/icon.png"),
   });
   loadWindow(win, "#/home");
   return win;
@@ -55,6 +59,10 @@ export function createMascotWindow(): BrowserWindow {
       preload: PRELOAD_PATH,
       sandbox: false,
     },
+    icon:
+      process.platform === "win32"
+        ? join(__dirname, "../../build/icon.ico")
+        : join(__dirname, "../../build/icon.png"),
   });
   loadWindow(win, "#/mascot");
   return win;

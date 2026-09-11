@@ -1,28 +1,28 @@
 appId: com.kibo.app
-productName: kibo
+productName: Kibo
+
 directories:
   buildResources: build
+  output: dist
+
 files:
   - "out/**/*"
   - "build/kiboTemplate*.png"
-  - "!**/.vscode/*"
-  - "!src/*"
-  - "!electron.vite.config.{js,ts,mjs,cjs}"
-  - "!{.gitignore,.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}"
-  - "!{.env,.env.*,.npmrc,pnpm-lock.yaml}"
-  - "!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}"
-  - "!scripts/*"
-  - "!build/icon-source.png"
-  - "!build/icon.icns"
-  - "!build/icon.png"
+
 mac:
+  icon: build/icon.icns
   category: public.app-category.productivity
   target:
     - dmg
+
 win:
+  icon: build/icon.ico
   target:
     - nsis
+
 linux:
+  icon: build/icon.png
+  category: Utility
   target:
     - AppImage
     - deb
