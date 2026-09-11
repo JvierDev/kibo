@@ -1,10 +1,17 @@
 {
   "name": "kibo",
   "version": "0.2.0",
-  "description": "Kibo — your healthy-work companion",
+  "description": "A friendly desktop companion for healthier work habits.",
+  "author": "Javier Henriquez",
+  "license": "MIT",
   "main": "out/main/index.js",
   "type": "module",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JvierDev/kibo.git"
+  },
+  "homepage": "https://github.com/JvierDev/kibo",
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",

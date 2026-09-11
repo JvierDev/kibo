@@ -1,5 +1,7 @@
-appId: com.kibo.app
+appId: io.github.jvierdev.kibo
 productName: Kibo
+
+artifactName: "${productName}-${version}-${arch}.${ext}"
 
 directories:
   buildResources: build
@@ -13,12 +15,16 @@ mac:
   icon: build/icon.icns
   category: public.app-category.productivity
   target:
-    - dmg
+    - target: dmg
+      arch:
+        - universal
 
 win:
   icon: build/icon.ico
   target:
-    - nsis
+    - target: nsis
+      arch:
+        - x64
 
 linux:
   icon: build/icon.png
