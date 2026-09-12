@@ -1,6 +1,11 @@
 appId: io.github.jvierdev.kibo
 productName: Kibo
 
+publish:
+  provider: github
+  owner: JvierDev
+  repo: kibo
+
 artifactName: "${productName}-${version}-${arch}.${ext}"
 
 directories:
