@@ -2,7 +2,7 @@
   "name": "kibo",
   "version": "0.2.0",
   "description": "A friendly desktop companion for healthier work habits.",
-  "author": "Javier Henriquez",
+  "author": "Javier Henriquez <javier.hensep@outlook.com>",
   "license": "MIT",
   "main": "out/main/index.js",
   "type": "module",
